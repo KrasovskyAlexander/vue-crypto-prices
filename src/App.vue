@@ -38,6 +38,7 @@
                 name="wallet"
                 id="wallet"
                 v-model="tickerName"
+                @input="isTickerAdd = false"
                 v-on:keydown.enter="addCoin"
                 class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
                 placeholder="Например DOGE"
@@ -67,7 +68,9 @@
                 CHD
               </span>
             </div>
-            <div class="text-sm text-red-600">Такой тикер уже добавлен</div>
+            <div v-if="isTickerAdd" class="text-sm text-red-600">
+              Такой тикер уже добавлен
+            </div>
           </div>
         </div>
         <button
@@ -186,6 +189,7 @@ export default {
       selectTicker: null,
       graph: [],
       allAvaibleToken: null,
+      isTickerAdd: false,
     };
   },
 
@@ -202,6 +206,13 @@ export default {
       const apiKey =
         'c6a9819b4d3972ac81cc7a928337cec6cda84d307e44fd7b840c7661720a8a55';
       console.log(this.tickerName);
+      const isDuplicateTicker = this.tickers.find(
+        (ticker) => ticker.name.toLowerCase() === this.tickerName.toLowerCase()
+      );
+      if (isDuplicateTicker) {
+        this.isTickerAdd = true;
+        return;
+      }
       const currentTicker = {
         name: this.tickerName,
         price: '-',
@@ -216,7 +227,7 @@ export default {
         const cryptoCompare = await data.json();
         this.tickers.find((ticker) => ticker.id === currentTicker.id).price =
           cryptoCompare.USD;
-        console.log(this.selectTicker);
+
         if (this.selectTicker?.id === currentTicker.id) {
           this.graph.push(cryptoCompare.USD);
         }
