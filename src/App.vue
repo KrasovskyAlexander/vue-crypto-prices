@@ -38,34 +38,23 @@
                 name="wallet"
                 id="wallet"
                 v-model="tickerName"
-                @input="isTickerAdd = false"
+                @input="autocomplete"
                 v-on:keydown.enter="addCoin"
                 class="block w-full pr-10 border-gray-300 text-gray-900 focus:outline-none focus:ring-gray-500 focus:border-gray-500 sm:text-sm rounded-md"
                 placeholder="Например DOGE"
               />
             </div>
             <div
+              v-if="autocompleteTickers.length"
               class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap"
             >
               <span
+                v-for="item in this.autocompleteTickers"
+                :key="item[0]"
+                @click="(tickerName = item[0]), addCoin()"
                 class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
               >
-                BTC
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                DOGE
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                BCH
-              </span>
-              <span
-                class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer"
-              >
-                CHD
+                {{ item[0] }}
               </span>
             </div>
             <div v-if="isTickerAdd" class="text-sm text-red-600">
@@ -190,6 +179,7 @@ export default {
       graph: [],
       allAvaibleToken: null,
       isTickerAdd: false,
+      autocompleteTickers: [],
     };
   },
 
@@ -247,9 +237,17 @@ export default {
       if (ticker === this.selectTicker) {
         this.selectTicker = null;
       }
-      const removeInter = interval.find((i) => i.id === ticker.id)?.intervals;
-      if (removeInter) clearInterval(removeInter);
-      this.tickers = this.tickers.filter((i) => i !== ticker);
+      const removeInter = interval.find((i) => i.id === ticker.id);
+
+      if (removeInter) clearInterval(removeInter?.intervals); // стоп интервала
+
+      const index = interval.findIndex((item) => item.id === ticker.id);
+
+      if (index !== -1) {
+        interval.splice(index, 1); // удаление интервала с колекции интервалов.
+      }
+
+      this.tickers = this.tickers.filter((i) => i !== ticker); // удаление тикера
     },
 
     normalizeGraph() {
@@ -258,6 +256,25 @@ export default {
       return this.graph.map(
         (price) => 5 + ((price - minValue) * 95) / (maxValue - minValue)
       );
+    },
+
+    autocomplete(event) {
+      this.isTickerAdd = false;
+
+      if (!event.target.value) {
+        this.autocompleteTickers = [];
+        return;
+      }
+
+      this.autocompleteTickers = Object.entries(this.allAvaibleToken.Data)
+        .filter(
+          (item) =>
+            item[0].toLowerCase().includes(event.target.value.toLowerCase()) ||
+            item[1].FullName.toLowerCase().includes(
+              event.target.value.toLowerCase()
+            )
+        )
+        .slice(0, 4); // В реализации нам нужно показывать лишь 4 элемента
     },
   },
 };
